@@ -17,7 +17,7 @@ public class Block : ScriptableObject
 
 Then you should put those created ScriptableObjects in `Resources` folder.
 
-![](Images/Resources.png)
+![](Images/Resources.PNG)
 
 Now we want to use `ScriptableObjectDropdown` attribute. We can use this attribute in both `MonoBeahviour` and `ScriptableObject` derived classes.
 
