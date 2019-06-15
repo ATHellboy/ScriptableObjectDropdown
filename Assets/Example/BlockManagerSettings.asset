@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e76a637aeef825444afda0107bf92531, type: 3}
   m_Name: BlockManagerSettings
   m_EditorClassIdentifier: 
-  firstTargetBlock: {fileID: 0}
-  secondTargetBlock: {fileID: 0}
+  firstTargetBlock: {fileID: 11400000, guid: 61ccf68aa0c1aaf49863e42dbf5daccb, type: 2}
+  secondTargetBlock: {fileID: 11400000, guid: b7db1a267a54352409462236e19036f3, type: 2}
