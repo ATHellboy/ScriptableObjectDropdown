@@ -1,11 +1,11 @@
 # ScriptableObjectDropdown
 ScriptableObjectDropdown is an attribute for the Unity Inspector.
-It is used for showing ScriptableObjects which are created in your project, in dropdown menu in Inspector.
+It is used for showing ScriptableObjects which are created in your project, in dropdown menu and select between them in Inspector.
 
 # Usage Example
 1. Clone this repository or download the latest [release package available](https://github.com/ATHellboy/ScriptableObjectDropdown/releases) (There isn't an example folder in `.unitypackage`).
 
-2. Create `ScriptableObject` class which you  want to create specified object by that.
+2. Create `ScriptableObject` class which you  want to create specified objects by that.
 
 ```cs
 using UnityEngine;
@@ -21,7 +21,7 @@ public class Block : ScriptableObject
 
 ![](Images/Resources.PNG)
 
-4. Use `ScriptableObjectDropdown` attribute like this in `MonoBeahviour` or `ScriptableObject` derived classes.
+4. Use `ScriptableObjectDropdown` attribute by setting optional grouping (Default grouping is None) like this in `MonoBeahviour` or `ScriptableObject` derived classes.
 
 **MonoBehavior**
 
