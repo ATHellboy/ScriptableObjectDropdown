@@ -78,7 +78,7 @@ namespace ScriptableObjectDropdown.Editor
         }
 
         /// <summary>
-        /// Get ScriptableObjects just when it is a first time or new ScriptableObject added to the project
+        /// Gets ScriptableObjects just when it is a first time or new ScriptableObject added to the project
         /// </summary>
         private static ScriptableObject[] GetScriptableObjects(SerializedProperty property)
         {
