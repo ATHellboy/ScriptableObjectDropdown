@@ -49,6 +49,7 @@ namespace ScriptableObjectDropdown
     /// 
     /// // or
     /// 
+    /// [CreateAssetMenu(menuName = "Create Block Manager Settings")]
     /// public class BlockManagerSetting : ScriptableObject
     /// {
     ///     [ScriptableObjectDropdown] public Block targetBlock;
