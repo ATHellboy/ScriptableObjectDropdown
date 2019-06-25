@@ -82,10 +82,11 @@ namespace ScriptableObjectDropdown.Editor
         /// </summary>
         private static ScriptableObject[] GetScriptableObjects(SerializedProperty property)
         {
-            UnityEngine.Object[] loadedObject = Resources.LoadAll("", GetPropertyType(property));
-            for (int i = 0; i < loadedObject.Length; i++)
+            Type propertyType = GetPropertyType(property);
+            string[] guids = AssetDatabase.FindAssets(String.Format("t:{0}", propertyType));
+            for (int i = 0; i < guids.Length; i++)
             {
-                _scriptableObjects.Add(loadedObject[i] as ScriptableObject);
+                _scriptableObjects.Add(AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(guids[i]), propertyType) as ScriptableObject);
             }
 
             return _scriptableObjects.ToArray();
@@ -105,7 +106,7 @@ namespace ScriptableObjectDropdown.Editor
                 }
                 else
                 {
-                    EditorGUI.LabelField(position, "No this type asset in Resources folder");
+                    EditorGUI.LabelField(position, "There is no this type asset in the project");
                 }
             }
             else
@@ -227,8 +228,7 @@ namespace ScriptableObjectDropdown.Editor
         private static string FindScriptableObjectFolderPath(ScriptableObject scriptableObject)
         {
             string path = AssetDatabase.GetAssetPath(scriptableObject);
-            path = path.Substring(path.IndexOf("Resources"));
-            path = path.Replace("Resources/", "");
+            path = path.Replace("Assets/", "");
             path = path.Replace(".asset", "");
 
             return path;
