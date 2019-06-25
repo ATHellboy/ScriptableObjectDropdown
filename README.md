@@ -19,7 +19,7 @@ public class Block : ScriptableObject
 }
 ```
 
-3. Put those created ScriptableObjects in `Resources` folder.
+3. Create ScriptableObjects in the project.
 
 ![](Images/Resources.PNG)
 
