@@ -6,34 +6,42 @@ using UnityEditor;
 using System.Reflection;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using ScriptableObjectDropdown.Extension;
 
 namespace ScriptableObjectDropdown.Editor
 {
     // TODO: Mixed value (-) for selecting multi objects
+    // TODO: Don't clear the ScriptableObjects list when it is unselected
     [CustomPropertyDrawer(typeof(ScriptableObjectDropdownAttribute))]
+    [CustomPropertyDrawer(typeof(ScriptableObjectReference))]
     public class ScriptableObjectDropdownDrawer : PropertyDrawer
     {
-        private static List<ScriptableObject> _scriptableObjects = new List<ScriptableObject>();
-        private static ScriptableObject _selectedScriptableObject;
-        private static readonly int _controlHint = typeof(ScriptableObjectDropdownAttribute).GetHashCode();
-        private static GUIContent _popupContent = new GUIContent();
-        private static int _selectedControlID;
-        private static readonly GenericMenu.MenuFunction2 _onSelectedScriptableObject = OnSelectedScriptableObject;
-        private static bool isChanged;
+        private readonly GenericMenu.MenuFunction2 _onSelectedScriptableObject;
+        private readonly int _controlHint = typeof(ScriptableObjectDropdownAttribute).GetHashCode();
 
-        static ScriptableObjectDropdownDrawer()
+        private ScriptableObject _selectedScriptableObject;
+        private List<ScriptableObject> _scriptableObjects = new List<ScriptableObject>();
+        private GUIContent _popupContent = new GUIContent();
+        private int _selectedControlID;
+        private bool _isChanged;
+
+        public ScriptableObjectDropdownDrawer()
         {
+            _onSelectedScriptableObject = OnSelectedScriptableObject;
+
             EditorApplication.projectChanged += ClearCache;
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
+            ScriptableObjectDropdownAttribute castedAttribute = attribute as ScriptableObjectDropdownAttribute;
             if (_scriptableObjects.Count == 0)
             {
-                GetScriptableObjects(property);
+                GetScriptableObjects(castedAttribute);
             }
 
-            Draw(position, label, property, attribute as ScriptableObjectDropdownAttribute);
+            Draw(position, label, property, castedAttribute);
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -44,10 +52,10 @@ namespace ScriptableObjectDropdown.Editor
         /// <summary>
         /// How you can get type of field which it uses PropertyAttribute
         /// </summary>
-        private static Type GetPropertyType(SerializedProperty property)
+        private Type GetPropertyType(SerializedProperty property)
         {
             Type parentType = property.serializedObject.targetObject.GetType();
-            FieldInfo fieldInfo = parentType.GetField(property.propertyPath);
+            FieldInfo fieldInfo = parentType.GetFieldViaPath(property.propertyPath);
             if (fieldInfo != null)
             {
                 return fieldInfo.FieldType;
@@ -55,14 +63,24 @@ namespace ScriptableObjectDropdown.Editor
             return null;
         }
 
-        private static bool ValidateProperty(SerializedProperty property)
+        private bool ValidateAttribute(ScriptableObjectDropdownAttribute attribute)
+        {
+            if (attribute.BaseType.IsInterface)
+            {
+                return true;
+            }
+
+            if (attribute.BaseType.IsSubclassOf(typeof(ScriptableObject)))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private bool ValidateProperty(SerializedProperty property)
         {
             Type propertyType = GetPropertyType(property);
-            if (propertyType == null)
-            {
-                return false;
-            }
-            if (!propertyType.IsSubclassOf(typeof(ScriptableObject)) && propertyType != typeof(ScriptableObject))
+            if (propertyType == null || propertyType != typeof(ScriptableObjectReference))
             {
                 return false;
             }
@@ -72,24 +90,40 @@ namespace ScriptableObjectDropdown.Editor
         /// <summary>
         /// When new ScriptableObject added to the project
         /// </summary>
-        private static void ClearCache()
+        private void ClearCache()
         {
             _scriptableObjects.Clear();
         }
 
         /// <summary>
-        /// Gets ScriptableObjects just when it is a first time or new ScriptableObject added to the project
+        /// Gets ScriptableObjects just when it is selected or new ScriptableObject added to the project
         /// </summary>
-        private static ScriptableObject[] GetScriptableObjects(SerializedProperty property)
+        private void GetScriptableObjects(ScriptableObjectDropdownAttribute attribute)
         {
-            Type propertyType = GetPropertyType(property);
-            string[] guids = AssetDatabase.FindAssets(String.Format("t:{0}", propertyType));
-            for (int i = 0; i < guids.Length; i++)
+            if (attribute.BaseType.IsClass)
             {
-                _scriptableObjects.Add(AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(guids[i]), propertyType) as ScriptableObject);
+                string[] guids = AssetDatabase.FindAssets(String.Format("t:{0}", attribute.BaseType));
+                for (int i = 0; i < guids.Length; i++)
+                {
+                    _scriptableObjects.Add(AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(guids[i]), attribute.BaseType) as ScriptableObject);
+                }
             }
 
-            return _scriptableObjects.ToArray();
+            if (attribute.BaseType.IsInterface)
+            {
+                var types = AppDomain.CurrentDomain.GetAssemblies()
+                    .SelectMany(s => s.GetTypes())
+                    .Where(p => attribute.BaseType.IsAssignableFrom(p));
+
+                foreach (Type type in types)
+                {
+                    string[] guids = AssetDatabase.FindAssets(String.Format("t:{0}", type));
+                    for (int i = 0; i < guids.Length; i++)
+                    {
+                        _scriptableObjects.Add(AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(guids[i]), attribute.BaseType) as ScriptableObject);
+                    }
+                }
+            }
         }
 
         private void Draw(Rect position, GUIContent label,
@@ -98,37 +132,43 @@ namespace ScriptableObjectDropdown.Editor
             if (label != null && label != GUIContent.none)
                 position = EditorGUI.PrefixLabel(position, label);
 
-            if (ValidateProperty(property))
+            if (!ValidateAttribute(attribute))
             {
-                if (_scriptableObjects.Count != 0)
-                {
-                    UpdateScriptableObjectSelectionControl(position, label, property, attribute);
-                }
-                else
-                {
-                    EditorGUI.LabelField(position, "There is no this type asset in the project");
-                }
+                EditorGUI.LabelField(position, "PropertyAttribute baseType does not inherit ScriptableObject");
+                return;
             }
-            else
+
+            if (!ValidateProperty(property))
             {
-                EditorGUI.LabelField(position, "Use it with non-array ScriptableObject or derived class of ScriptableObject");
+                EditorGUI.LabelField(position, "Use it with ScriptableObjectReference");
+                return;
             }
+
+            if (_scriptableObjects.Count == 0)
+            {
+                EditorGUI.LabelField(position, "This type asset does not exist in the project");
+                return;
+            }
+
+            UpdateScriptableObjectSelectionControl(position, label, property, attribute);
         }
 
-        private static void UpdateScriptableObjectSelectionControl(Rect position, GUIContent label,
+        private void UpdateScriptableObjectSelectionControl(Rect position, GUIContent label,
             SerializedProperty property, ScriptableObjectDropdownAttribute attribute)
         {
-            ScriptableObject output = DrawScriptableObjectSelectionControl(position, label, property.objectReferenceValue as ScriptableObject, property, attribute);
+            SerializedProperty value = property.FindPropertyRelative("value");
+            ScriptableObject output = DrawScriptableObjectSelectionControl(position, label,
+                value.objectReferenceValue as ScriptableObject, attribute);
 
-            if (isChanged)
+            if (_isChanged)
             {
-                isChanged = false;
-                property.objectReferenceValue = output;
+                _isChanged = false;
+                value.objectReferenceValue = output;
             }
         }
 
-        private static ScriptableObject DrawScriptableObjectSelectionControl(Rect position, GUIContent label,
-            ScriptableObject scriptableObject, SerializedProperty property, ScriptableObjectDropdownAttribute attribute)
+        private ScriptableObject DrawScriptableObjectSelectionControl(Rect position, GUIContent label,
+            ScriptableObject scriptableObject, ScriptableObjectDropdownAttribute attribute)
         {
             bool triggerDropDown = false;
             int controlID = GUIUtility.GetControlID(_controlHint, FocusType.Keyboard, position);
@@ -143,7 +183,7 @@ namespace ScriptableObjectDropdown.Editor
                             if (scriptableObject != _selectedScriptableObject)
                             {
                                 scriptableObject = _selectedScriptableObject;
-                                isChanged = true;
+                                _isChanged = true;
                             }
 
                             _selectedControlID = 0;
@@ -196,7 +236,7 @@ namespace ScriptableObjectDropdown.Editor
             return scriptableObject;
         }
 
-        private static void DisplayDropDown(Rect position, ScriptableObject selectedScriptableObject, ScriptableObjectGrouping grouping)
+        private void DisplayDropDown(Rect position, ScriptableObject selectedScriptableObject, ScriptableObjectGrouping grouping)
         {
             var menu = new GenericMenu();
 
@@ -218,14 +258,14 @@ namespace ScriptableObjectDropdown.Editor
             menu.DropDown(position);
         }
 
-        private static void OnSelectedScriptableObject(object userData)
+        private void OnSelectedScriptableObject(object userData)
         {
             _selectedScriptableObject = userData as ScriptableObject;
             var scriptableObjectReferenceUpdatedEvent = EditorGUIUtility.CommandEvent("ScriptableObjectReferenceUpdated");
             EditorWindow.focusedWindow.SendEvent(scriptableObjectReferenceUpdatedEvent);
         }
 
-        private static string FindScriptableObjectFolderPath(ScriptableObject scriptableObject)
+        private string FindScriptableObjectFolderPath(ScriptableObject scriptableObject)
         {
             string path = AssetDatabase.GetAssetPath(scriptableObject);
             path = path.Replace("Assets/", "");
@@ -234,7 +274,7 @@ namespace ScriptableObjectDropdown.Editor
             return path;
         }
 
-        private static string MakeDropDownGroup(ScriptableObject scriptableObject, ScriptableObjectGrouping grouping)
+        private string MakeDropDownGroup(ScriptableObject scriptableObject, ScriptableObjectGrouping grouping)
         {
             string path = FindScriptableObjectFolderPath(scriptableObject);
 

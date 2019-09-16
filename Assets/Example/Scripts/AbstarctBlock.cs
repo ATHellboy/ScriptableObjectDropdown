@@ -2,8 +2,7 @@
 
 namespace Example
 {
-    [CreateAssetMenu(menuName = "Create Block")]
-    public class Block : ScriptableObject
+    public abstract class AbstarctBlock : ScriptableObject
     {
         // Some fields and functions
     }

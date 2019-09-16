@@ -9,8 +9,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e76a637aeef825444afda0107bf92531, type: 3}
-  m_Name: BlockManagerSettings
+  m_Script: {fileID: 11500000, guid: a0a4448a1a3a77c41b6e02608101e83e, type: 3}
+  m_Name: Dirt1
   m_EditorClassIdentifier: 
-  firstTargetBlock: {fileID: 11400000, guid: 61ccf68aa0c1aaf49863e42dbf5daccb, type: 2}
-  secondTargetBlock: {fileID: 11400000, guid: b7db1a267a54352409462236e19036f3, type: 2}

@@ -26,6 +26,7 @@ namespace ScriptableObjectDropdown
         ByFolderFlat
     }
 
+    #region Example
     /// <example>
     /// <para>Usage Examples</para>
     /// <code language="csharp"><![CDATA[
@@ -35,36 +36,100 @@ namespace ScriptableObjectDropdown
     /// [CreateAssetMenu(menuName = "Create Block")]
     /// public class Block : ScriptableObject
     /// {
-    ///     // Some fields
+    ///     // Some fields and functions
+    /// }
+    /// 
+    /// public interface IBlock
+    /// {
+    ///     // Some properties and functions signature
+    /// }
+    /// 
+    /// public abstract class AbstarctBlock : ScriptableObject
+    /// {
+    ///     // Some fields and functions
+    /// }
+    /// 
+    /// [CreateAssetMenu(menuName = "Blocks/Water")]
+    /// public class WaterBlock : AbstarctBlock
+    /// {
+    ///     // Some fields and functions
+    /// }
+    /// 
+    /// [CreateAssetMenu(menuName = "Blocks/Snow")]
+    /// public class SnowBlock : ScriptableObject, IBlock
+    /// {
+    ///     // Some fields and functions
+    /// }
+    /// 
+    /// [CreateAssetMenu(menuName = "Blocks/Sand")]
+    /// public class SandBlock : Block
+    /// {
+    ///     // Some fields and functions
+    /// }
+    /// 
+    /// [CreateAssetMenu(menuName = "Blocks/Dirt")]
+    /// public class DirtBlock : ScriptableObject, IBlock
+    /// {
+    ///     // Some fields and functions
     /// }
     /// 
     /// public class BlockManager : MonoBehaviour
     /// {
-    ///     [ScriptableObjectDropdown] public Block targetBlock;
+    ///     // Without grouping (default is None)
+    ///     [ScriptableObjectDropdown(typeof(Block))] public ScriptableObjectReference targetBlock;
     ///     
-    ///     // or
+    ///     // By grouping
+    ///     [ScriptableObjectDropdown(typeof(Block), grouping = ScriptableObjectGrouping.ByFolder)]
+    ///     public ScriptableObjectReference targetBlockByGrouping;
     ///     
-    ///     [ScriptableObjectDropdown(grouping = ScriptableObjectGrouping.ByFolder)] public Block targetBlock;
+    ///     // Derived class
+    ///     [ScriptableObjectDropdown(typeof(SandBlock))] public ScriptableObjectReference derivedClassTargetBlock;
+    ///     
+    ///     // Derived abstract class
+    ///     [ScriptableObjectDropdown(typeof(AbstarctBlock))] public ScriptableObjectReference derivedAbstractClassTargetBlock;
+    ///     
+    ///     // Interface
+    ///     [ScriptableObjectDropdown(typeof(IBlock))] public ScriptableObjectReference interfaceTargetBlock;
     /// }
-    /// 
-    /// // or
     /// 
     /// [CreateAssetMenu(menuName = "Create Block Manager Settings")]
     /// public class BlockManagerSetting : ScriptableObject
     /// {
-    ///     [ScriptableObjectDropdown] public Block targetBlock;
+    ///     // Without grouping (default is None)
+    ///     [ScriptableObjectDropdown(typeof(Block))] public ScriptableObjectReference targetBlock;
     ///     
-    ///     // or
+    ///     // By grouping
+    ///     [ScriptableObjectDropdown(typeof(Block), grouping = ScriptableObjectGrouping.ByFolder)]
+    ///     public ScriptableObjectReference targetBlockByGrouping;
     ///     
-    ///     [ScriptableObjectDropdown(grouping = ScriptableObjectGrouping.ByFolder)] public Block targetBlock;
+    ///     // Derived class
+    ///     [ScriptableObjectDropdown(typeof(SandBlock))] public ScriptableObjectReference derivedClassTargetBlock;
+    ///     
+    ///     // Derived abstract class
+    ///     [ScriptableObjectDropdown(typeof(AbstarctBlock))] public ScriptableObjectReference derivedAbstractClassTargetBlock;
+    ///     
+    ///     // Interface
+    ///     [ScriptableObjectDropdown(typeof(IBlock))] public ScriptableObjectReference interfaceTargetBlock;
     /// }
     /// ]]></code>
     /// </example>
+    #endregion
+
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
     public class ScriptableObjectDropdownAttribute : PropertyAttribute
     {
         public ScriptableObjectGrouping grouping = ScriptableObjectGrouping.None;
 
-        public ScriptableObjectDropdownAttribute() { }
+        private Type _baseType;
+        public Type BaseType
+        {
+            get { return _baseType; }
+            private set { _baseType = value; }
+        }
+
+        public ScriptableObjectDropdownAttribute(Type baseType)
+        {
+            _baseType = baseType;
+        }
     }
 }
