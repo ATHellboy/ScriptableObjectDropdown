@@ -285,6 +285,9 @@ namespace ScriptableObjectDropdown.Editor
                     path = path.Replace("/", " > ");
                     return path;
 
+                case ScriptableObjectGrouping.NameOnly:
+                    return scriptableObject.name;
+
                 case ScriptableObjectGrouping.ByFolder:
                     return path;
 
