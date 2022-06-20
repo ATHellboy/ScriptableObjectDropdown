@@ -16,6 +16,10 @@ namespace ScriptableObjectDropdown
         /// </summary>
         None,
         /// <summary>
+        /// No grouping, only the base name of the ScriptableObject; for instance "SpecialScriptableObject"
+        /// </summary>
+        NameOnly,
+        /// <summary>
         /// Group classes by namespace and show foldout menus for nested namespaces; for
         /// instance, "MainFolder >> NestedFolder >> SpecialScriptableObject".
         /// </summary>
